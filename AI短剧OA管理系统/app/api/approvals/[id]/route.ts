@@ -1,7 +1,7 @@
 import { requireAccount } from "@/server/auth";
 import { getD1, writeAudit } from "@/server/database";
 import { ApiError, errorResponse, readJson, cleanText } from "@/server/http";
-import { requirePermission } from "@/server/policy";
+import { accessibleChannelIds, requirePermission } from "@/server/policy";
 import { createNotification } from "@/server/notifications";
 
 export async function PATCH(request: Request, context: { params: Promise<{ id: string }> }) {
@@ -20,7 +20,10 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
     `).bind(id).first<{ requester_account_id: string; status: string; channel_id: string | null }>();
     if (!row) throw new ApiError(404, "Withdrawal request not found");
     if (row.status !== "pending") throw new ApiError(409, "Only pending requests can be reviewed");
-    if (account.role === "market" && (!account.channelId || row.channel_id !== account.channelId)) throw new ApiError(403, "Forbidden");
+    if (account.role === "market") {
+      const channelIds = await accessibleChannelIds(account);
+      if (!row.channel_id || !channelIds.includes(row.channel_id)) throw new ApiError(403, "无权审批该渠道的提现申请");
+    }
     await getD1().prepare(`
       UPDATE withdrawal_requests
       SET status = ?, reviewed_by = ?, reviewed_at = CURRENT_TIMESTAMP, review_note = ?, updated_at = CURRENT_TIMESTAMP

@@ -101,10 +101,10 @@ test("connects the management and invitation pages to real APIs", async () => {
     readFile(projectFile("package.json"), "utf8"),
   ]);
 
-  assert.match(page, /fetch\("\/api\/auth\/login"/);
-  assert.match(page, /fetch\("\/api\/channels"/);
-  assert.match(page, /fetch\("\/api\/users"/);
-  assert.match(page, /fetch\("\/api\/invitations"/);
+  assert.match(page, /apiRequest[^\n]*"\/api\/auth\/login"/);
+  assert.match(page, /apiRequest[^\n]*"\/api\/channels"/);
+  assert.match(page, /apiRequest[^\n]*"\/api\/users"/);
+  assert.match(page, /apiRequest[^\n]*"\/api\/invitations"/);
   assert.match(page, /登录用户名/);
   assert.match(page, /登录手机号/);
   assert.match(register, /\/api\/public\/register/);

@@ -1,9 +1,11 @@
 "use client";
 import { useEffect, useState } from "react";
 import Image from "next/image";
+import { apiBlob, apiRequest, backendApi } from "@/app/lib/api";
+import { BackendOperations, type OperationsView } from "@/app/components/backend/BackendOperations";
 
 type Portal="超级管理员"|"市场端"|"加盟端"|"代理端";
-type View="经营总览"|"渠道生态"|"用户中心"|"产品定价"|"订单承制"|"钱包结算"|"佣金比例调整"|"审批中心"|"邀请管理"|"权限审计"|"消息通知";
+type View="经营总览"|"渠道生态"|"用户中心"|"产品定价"|"订单承制"|"钱包结算"|"佣金比例调整"|"审批中心"|"邀请管理"|"权限审计"|"消息通知"|"报表统计"|"文件管理"|"系统配置"|"数据备份";
 type Approval={id:string;title:string;applicant:string;time:string;status:"待审批"|"已通过"|"已驳回"};
 type Payout=string[];
 type CommRate={id:string;name:string;role:"加盟端"|"代理端";mem:string;course:string;boutique:string};
@@ -19,12 +21,12 @@ const statusFromChannel=(status:string)=>status==="active"?"正常":status==="su
 const statusToChannel=(status:string)=>status==="正常"?"active":status==="暂停"?"suspended":"observing";
 
 const portalNav:Record<Portal,View[]>={
-  "超级管理员":["经营总览","渠道生态","用户中心","产品定价","订单承制","钱包结算","佣金比例调整","审批中心","邀请管理","权限审计","消息通知"],
-  "市场端":["经营总览","渠道生态","用户中心","产品定价","订单承制","钱包结算","佣金比例调整","审批中心","邀请管理","权限审计","消息通知"],
-  "加盟端":["经营总览","渠道生态","用户中心","产品定价","钱包结算","佣金比例调整","邀请管理","消息通知"],
-  "代理端":["经营总览","用户中心","产品定价","钱包结算","邀请管理","消息通知"],
+  "超级管理员":["经营总览","渠道生态","用户中心","产品定价","订单承制","钱包结算","佣金比例调整","审批中心","邀请管理","报表统计","文件管理","权限审计","系统配置","数据备份","消息通知"],
+  "市场端":["经营总览","渠道生态","用户中心","产品定价","订单承制","钱包结算","佣金比例调整","审批中心","邀请管理","报表统计","文件管理","权限审计","系统配置","数据备份","消息通知"],
+  "加盟端":["经营总览","渠道生态","用户中心","产品定价","钱包结算","佣金比例调整","邀请管理","报表统计","文件管理","消息通知"],
+  "代理端":["经营总览","用户中心","产品定价","钱包结算","邀请管理","报表统计","文件管理","消息通知"],
 };
-const navIcons:Record<View,string>={"经营总览":"◫","渠道生态":"⌘","用户中心":"◎","产品定价":"◇","订单承制":"▦","钱包结算":"¥","佣金比例调整":"％","审批中心":"✓","邀请管理":"⌗","权限审计":"⌁","消息通知":"◉"};
+const navIcons:Record<View,string>={"经营总览":"◫","渠道生态":"⌘","用户中心":"◎","产品定价":"◇","订单承制":"▦","钱包结算":"¥","佣金比例调整":"％","审批中心":"✓","邀请管理":"⌗","权限审计":"⌁","消息通知":"◉","报表统计":"▥","文件管理":"▤","系统配置":"⚙","数据备份":"↧"};
 const portalTitle:Record<Portal,string>={"超级管理员":"集团经营总览","市场端":"市场运营驾驶舱","加盟端":"华东区域经营中心","代理端":"我的代理工作台"};
 const portalAccount:Record<Portal,string>={"超级管理员":"官方总部","市场端":"市场端·李珊","加盟端":"华东加盟中心","代理端":"星河创作社"};
 const inviteTargets:Record<Portal,string[]>={"超级管理员":["市场端","加盟端","代理端","用户"],"市场端":["加盟端","代理端","用户"],"加盟端":["代理端","用户"],"代理端":["用户"]};
@@ -94,9 +96,7 @@ function LoginPage({onLogin}:{onLogin:(account:BackendAccount)=>void}) {
     if(!password.trim()){setErr("请输入密码");return;}
     setErr("");setLoading(true);
     try{
-      const response=await fetch("/api/auth/login",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({identifier:username,password,role})});
-      const data=await response.json() as {account?:BackendAccount;error?:string};
-      if(!response.ok||!data.account) throw new Error(data.error||"登录失败");
+      const data=await apiRequest<{account:BackendAccount}>("/api/auth/login",{method:"POST",body:{identifier:username,password,role}});
       onLogin(data.account);
     }catch(error){setErr(error instanceof Error?error.message:"登录失败，请稍后重试");}
     finally{setLoading(false);}
@@ -137,11 +137,7 @@ export default function Home() {
   const [account,setAccount]=useState<BackendAccount|null>(null);
   const [view,setView]=useState<View>("经营总览");
   const [toast,setToast]=useState("");
-  const [approvals,setApprovals]=useState<Approval[]>([
-    {id:"AP26080603",title:"华南加盟中心申请提现 ¥28,600",applicant:"华南加盟中心",time:"今天 09:40",status:"待审批"},
-    {id:"AP26080602",title:"星河创作社申请提现 ¥3,600",applicant:"星河创作社",time:"昨天 18:26",status:"待审批"},
-    {id:"AP26080601",title:"川渝课程分销申请提现 ¥8,200",applicant:"川渝课程分销",time:"昨天 15:04",status:"已通过"},
-  ]);
+  const [approvals,setApprovals]=useState<Approval[]>([]);
   const [payouts,setPayouts]=useState<Payout[]>([
     ["PY26080602","华东加盟中心（加盟端）","¥12,600","超级管理员","08-06"],
     ["PY26080601","星河创作社（代理端）","¥3,200","市场端·李珊","08-05"],
@@ -152,44 +148,69 @@ export default function Home() {
   const [orders,setOrders]=useState<Order[]>(initOrders);
   const [users,setUsers]=useState<UserRecord[]>(initUsers);
   const [partners,setPartners]=useState<ChannelPartner[]>(initPartners);
-  const [msgs,setMsgs]=useState<Msg[]>(initMsgs);
+  const [msgs,setMsgs]=useState<Msg[]>([]);
 
   const notify=(msg:string)=>{setToast(msg);window.setTimeout(()=>setToast(""),2600);};
-  const loadBackendData=async()=>{
+  const notificationText=(row:Record<string,unknown>)=>{
+    const type=String(row.type??"system");
+    const labels:Record<string,[string,string]>={withdrawal_submitted:["新的提现申请","有渠道提交了新的提现申请，请前往审批中心处理。"],withdrawal_approved:["提现申请已通过","您的提现申请已通过审核。"],withdrawal_rejected:["提现申请已驳回","您的提现申请未通过审核，请查看审批意见。"]};
+    return labels[type]??[String(row.title??"系统通知"),String(row.content??"")];
+  };
+  const loadBackendData=async(authAccount:BackendAccount)=>{
     try{
-      const [channelResponse,userResponse]=await Promise.all([fetch("/api/channels"),fetch("/api/users")]);
-      if(!channelResponse.ok||!userResponse.ok) throw new Error("数据加载失败");
-      const channelData=await channelResponse.json() as {channels?:Record<string,unknown>[]};
-      const userData=await userResponse.json() as {users?:Record<string,unknown>[]};
+      const isManager=authAccount.role==="super_admin"||authAccount.role==="market";
+      const [channelData,userData,notificationData,approvalGroups]=await Promise.all([
+        authAccount.role==="agent"?Promise.resolve({channels:[]}):apiRequest<{channels?:Record<string,unknown>[]}>("/api/channels"),
+        apiRequest<{users?:Record<string,unknown>[]}>("/api/users"),
+        backendApi.notifications.list(),
+        isManager?Promise.all(["pending","approved","rejected"].map(status=>backendApi.approvals.list(status))):Promise.resolve([]),
+      ]);
       setPartners((channelData.channels??[]).map(row=>({
         id:String(row.id),accountId:String(row.account_id??""),name:String(row.name??""),role:roleFromChannel(String(row.role??"agent")),apiRole:String(row.role??"agent"),region:String(row.region??""),users:Number(row.user_count??0).toLocaleString(),revenue:`¥${(Number(row.recharge_amount??0)/100).toLocaleString()}`,target:`${Number(row.target_rate??0)}%`,status:statusFromChannel(String(row.status??"active")),contact:`${String(row.contact_name??"")} ${String(row.contact_phone??"")}`.trim(),contactName:String(row.contact_name??""),joinDate:String(row.created_at??"").slice(0,10),username:String(row.username??""),phone:String(row.login_phone??"")
       })));
       setUsers((userData.users??[]).map(row=>({
         id:String(row.id),name:String(row.name??""),phone:String(row.phone??""),email:String(row.email??""),invitedBy:String(row.invited_by_name??"系统登记"),invitorRole:portalFromRole(String(row.inviter_role??"agent") as BackendAccount["role"]),tag:String(row.tag??"新用户"),level:String(row.level??"普通用户"),recharged:Number(row.recharge_amount??0)/100,hasCharged:Number(row.recharge_amount??0)>0,product:String(row.product??"未购买"),joinDate:String(row.created_at??"").slice(0,10),note:String(row.note??"")
       })));
+      const currentPortal=portalFromRole(authAccount.role);
+      setMsgs((notificationData.notifications??[]).map(row=>{
+        const [title,body]=notificationText(row);
+        const rawType=String(row.type??"system");
+        const type:Msg["type"]=rawType.includes("withdrawal")?"approval":rawType.includes("commission")?"commission":rawType.includes("invite")?"invite":"system";
+        return {id:String(row.id),title,body,from:"系统",time:String(row.created_at??"").replace("T"," ").slice(0,16),read:Boolean(row.is_read),type,forPortals:[currentPortal]};
+      }));
+      const rows=approvalGroups.flatMap(group=>group.approvals??[]);
+      setApprovals(rows.map(row=>{
+        const raw=String(row.status??"pending");
+        const status:Approval["status"]=raw==="approved"?"已通过":raw==="rejected"?"已驳回":"待审批";
+        const applicant=String(row.channel_name??row.display_name??row.username??"未知账户");
+        return {id:String(row.id),title:`${applicant}申请提现 ¥${(Number(row.amount??0)/100).toLocaleString()}`,applicant,time:String(row.created_at??"").replace("T"," ").slice(0,16),status};
+      }));
     }catch(error){notify(error instanceof Error?error.message:"数据加载失败");}
   };
-  const login=async(nextAccount:BackendAccount)=>{setAccount(nextAccount);setPortal(portalFromRole(nextAccount.role));setView("经营总览");await loadBackendData();};
-  const logout=async()=>{await fetch("/api/auth/logout",{method:"POST"});setAccount(null);setPortal(null);setView("经营总览");};
-  useEffect(()=>{let active=true;fetch("/api/auth/me").then(response=>response.json() as Promise<{account?:BackendAccount|null}>).then(async data=>{if(active&&data.account){setAccount(data.account);setPortal(portalFromRole(data.account.role));await loadBackendData();}}).catch(()=>{});return()=>{active=false;};},[]);
-  const markRead=(id:string)=>setMsgs(l=>l.map(m=>m.id===id?{...m,read:true}:m));
-  const markAllRead=(p:Portal)=>setMsgs(l=>l.map(m=>m.forPortals.includes(p)?{...m,read:true}:m));
+  const login=async(nextAccount:BackendAccount)=>{setAccount(nextAccount);setPortal(portalFromRole(nextAccount.role));setView("经营总览");await loadBackendData(nextAccount);};
+  const logout=async()=>{try{await apiRequest<{success:true}>("/api/auth/logout",{method:"POST"});}finally{setAccount(null);setPortal(null);setApprovals([]);setMsgs([]);setView("经营总览");}};
+  useEffect(()=>{let active=true;apiRequest<{account?:BackendAccount|null}>("/api/auth/me").then(async data=>{if(active&&data.account){setAccount(data.account);setPortal(portalFromRole(data.account.role));await loadBackendData(data.account);}}).catch(()=>{});return()=>{active=false;};},[]);
+  const markRead=async(id:string)=>{try{await backendApi.notifications.read(id);setMsgs(list=>list.map(item=>item.id===id?{...item,read:true}:item));}catch(error){notify(error instanceof Error?error.message:"消息更新失败");}};
+  const markAllRead=async()=>{try{await backendApi.notifications.readAll();setMsgs(list=>list.map(item=>({...item,read:true})));}catch(error){notify(error instanceof Error?error.message:"消息更新失败");}};
 
-  const decide=(id:string,status:"已通过"|"已驳回")=>{
-    setApprovals(l=>l.map(a=>a.id===id?{...a,status}:a));
-    const ap=approvals.find(a=>a.id===id);
-    const newMsg:Msg={id:`M${Date.now()}`,title:`提现申请${status}`,body:`您的提现申请"${ap?.title}"已由${portalAccount[portal!]}${status}。`,from:portalAccount[portal!],time:"刚刚",read:false,type:"approval",forPortals:["加盟端","代理端"]};
-    setMsgs(l=>[newMsg,...l]);
-    notify(status==="已通过"?`已通过提现审批并写入审计日志`:"提现申请已驳回");
+  const decide=async(id:string,status:"已通过"|"已驳回")=>{
+    if(!account)return;
+    try{
+      await backendApi.approvals.decide(id,status==="已通过"?"approved":"rejected");
+      await loadBackendData(account);
+      notify(status==="已通过"?"已通过提现审批并写入操作日志":"提现申请已驳回");
+    }catch(error){notify(error instanceof Error?error.message:"审批处理失败");}
   };
-  const requestWithdraw=(account:string,amount:string)=>{
-    const id=`AP2608${String(60+approvals.length).padStart(4,"0")}`;
-    setApprovals(l=>[{id,title:`${account}申请提现 ¥${amount}`,applicant:account,time:"刚刚",status:"待审批"},...l]);
-    const newMsg:Msg={id:`M${Date.now()}`,title:"有新的提现申请",body:`${account}申请提现 ¥${amount}，请前往审批中心处理。`,from:"系统",time:"刚刚",read:false,type:"approval",forPortals:["超级管理员","市场端"]};
-    setMsgs(l=>[newMsg,...l]);
-    notify("提现申请已提交，等待审批");
-  };
-  const distribute=(receiver:string,amount:string)=>{
+  const requestWithdraw=async(payload:{amount:string;method:string;accountName:string;accountNumber:string;remark:string})=>{
+    if(!account)return;
+    const amount=Math.round(Number(payload.amount)*100);
+    if(!Number.isFinite(amount)||amount<=0){notify("请输入正确的提现金额");return;}
+    try{
+      await apiRequest<{withdrawal:{id:string}}>("/api/withdrawals",{method:"POST",body:{amount,method:payload.method,accountName:payload.accountName,accountNumber:payload.accountNumber,remark:payload.remark}});
+      await loadBackendData(account);
+      notify("提现申请已提交，等待审批");
+    }catch(error){notify(error instanceof Error?error.message:"提现申请提交失败");}
+  };  const distribute=(receiver:string,amount:string)=>{
     const id=`PY2608${String(10+payouts.length).padStart(4,"0")}`;
     setPayouts(l=>[[id,receiver,`¥${amount}`,portalAccount[portal!],"今天"],...l]);
     const target=receiver.includes("加盟端")?"加盟端":"代理端" as Portal;
@@ -226,20 +247,20 @@ export default function Home() {
   };
   const saveUser=async(u:UserRecord)=>{
     const exists=users.some(x=>x.id===u.id);
-    const response=await fetch(exists?`/api/users/${u.id}`:"/api/users",{method:exists?"PATCH":"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({name:u.name,phone:u.phone,email:u.email,tag:u.tag,level:u.level,product:u.product,note:u.note})});
-    const data=await response.json() as {error?:string};
-    if(!response.ok){notify(data.error||"用户信息保存失败");return;}
-    await loadBackendData();notify("用户信息已保存");
+    try{
+      await apiRequest(exists?`/api/users/${u.id}`:"/api/users",{method:exists?"PATCH":"POST",body:{name:u.name,phone:u.phone,email:u.email,tag:u.tag,level:u.level,product:u.product,note:u.note}});
+      if(account)await loadBackendData(account);notify("用户信息已保存");
+    }catch(error){notify(error instanceof Error?error.message:"用户信息保存失败");}
   };
   const savePartner=async(p:ChannelPartner):Promise<boolean>=>{
     const exists=partners.some(x=>x.id===p.id);
     const role=p.role.startsWith("A")?"market":p.role.startsWith("B")?"franchise":"agent";
     const payload:Record<string,unknown>={name:p.name,role,region:p.region,contactName:p.contactName||p.contact.split(" ")[0],contactPhone:p.phone||"",phone:p.phone||"",username:p.username||"",status:statusToChannel(p.status),targetRate:Number(p.target.replace("%",""))||0};
     if(p.password) payload.password=p.password;
-    const response=await fetch(exists?`/api/channels/${p.id}`:"/api/channels",{method:exists?"PATCH":"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});
-    const data=await response.json() as {error?:string};
-    if(!response.ok){notify(data.error||"渠道信息保存失败");return false;}
-    await loadBackendData();notify("渠道信息已保存");return true;
+    try{
+      await apiRequest(exists?`/api/channels/${p.id}`:"/api/channels",{method:exists?"PATCH":"POST",body:payload});
+      if(account)await loadBackendData(account);notify("渠道信息已保存");return true;
+    }catch(error){notify(error instanceof Error?error.message:"渠道信息保存失败");return false;}
   };
 
   if(!portal) return <LoginPage onLogin={login}/>;
@@ -295,8 +316,8 @@ export default function Home() {
         {view==="佣金比例调整"&&<CommissionRates portal={portal} commRates={commRates} rateLog={rateLog} updateRate={updateRate}/>}
         {view==="审批中心"    &&<ApprovalCenter approvals={approvals} decide={decide} canApprove={canApprove} portal={portal}/>}
         {view==="邀请管理"    &&<InviteCenter portal={portal} notify={notify}/>}
-        {view==="权限审计"    &&<Permissions/>}
-        {view==="消息通知"    &&<MsgCenter msgs={myMsgs} markRead={markRead} markAllRead={()=>markAllRead(portal)} setView={setView}/>}
+        {(view==="权限审计"||view==="报表统计"||view==="文件管理"||view==="系统配置"||view==="数据备份")&&<BackendOperations view={view as OperationsView} role={account!.role} notify={notify}/>}
+        {view==="消息通知"    &&<MsgCenter msgs={myMsgs} markRead={markRead} markAllRead={markAllRead} setView={setView}/>}
       </section>
       {toast&&<div className="oaToast">{toast}</div>}
     </main>
@@ -635,10 +656,14 @@ function OrderManagement({portal,orders,saveOrder,pushOrder,notify}:{portal:stri
 }
 
 // ── Wallet ────────────────────────────────────────────────────────────────
-function Wallet({portal,users,commRates,payouts,distribute,requestWithdraw,notify}:{portal:Portal;users:UserRecord[];commRates:CommRate[];payouts:Payout[];distribute:(r:string,a:string)=>void;requestWithdraw:(a:string,amt:string)=>void;notify:(s:string)=>void}) {
+function Wallet({portal,users,commRates,payouts,distribute,requestWithdraw,notify}:{portal:Portal;users:UserRecord[];commRates:CommRate[];payouts:Payout[];distribute:(r:string,a:string)=>void;requestWithdraw:(payload:{amount:string;method:string;accountName:string;accountNumber:string;remark:string})=>void;notify:(s:string)=>void}) {
   const [receiver,setReceiver]=useState("华东加盟中心（加盟端）");
   const [amount,setAmount]=useState("5000");
   const [withdrawAmt,setWithdrawAmt]=useState(portal==="加盟端"?"72680":"8420");
+  const [withdrawMethod,setWithdrawMethod]=useState("银行卡");
+  const [withdrawName,setWithdrawName]=useState(portalAccount[portal]);
+  const [withdrawNumber,setWithdrawNumber]=useState("");
+  const [withdrawRemark,setWithdrawRemark]=useState("");
   const isManager=portal==="超级管理员"||portal==="市场端";
   const account=portalAccount[portal];
   const channelStats=()=>{
@@ -687,7 +712,14 @@ function Wallet({portal,users,commRates,payouts,distribute,requestWithdraw,notif
       <div className="commSummary"><span>充值总额 <b>¥{totalCharged.toLocaleString()}</b></span><span>分佣比例 <b>{myRate?.course||"—"}</b></span><span>应付佣金 <b className="txt-gold">¥{myCommission.toLocaleString()}</b></span></div>
     </section>
     <section className="oaPanel payoutPanel"><PanelHead tag="WITHDRAW" title="发起提现" action="需超管/市场端审批"/>
-      <div className="payoutForm"><label>提现金额（¥）<input value={withdrawAmt} onChange={e=>setWithdrawAmt(e.target.value)} inputMode="numeric"/></label><button onClick={()=>requestWithdraw(account,withdrawAmt)}>提交提现申请</button></div>
+      <div className="payoutForm withdrawForm">
+        <label>提现金额（¥）<input value={withdrawAmt} onChange={e=>setWithdrawAmt(e.target.value)} inputMode="decimal"/></label>
+        <label>收款方式<select value={withdrawMethod} onChange={e=>setWithdrawMethod(e.target.value)}><option>银行卡</option><option>支付宝</option><option>微信</option></select></label>
+        <label>收款户名<input value={withdrawName} onChange={e=>setWithdrawName(e.target.value)}/></label>
+        <label>收款账号<input value={withdrawNumber} onChange={e=>setWithdrawNumber(e.target.value)} placeholder="请输入银行卡号或收款账号"/></label>
+        <label>申请备注<input value={withdrawRemark} onChange={e=>setWithdrawRemark(e.target.value)} placeholder="选填"/></label>
+        <button onClick={()=>requestWithdraw({amount:withdrawAmt,method:withdrawMethod,accountName:withdrawName,accountNumber:withdrawNumber,remark:withdrawRemark})}>提交提现申请</button>
+      </div>
     </section>
     <section className="oaPanel"><PanelHead tag="RECEIVED" title="收到的佣金分发" action={`${myPayouts.length} 笔`}/>
       <DataTable heads={["分发单号","接收方","金额","发放人","时间"]} rows={myPayouts.length?myPayouts:[["—","暂无记录","—","—","—"]]} onRow={()=>notify("已打开佣金分发凭证")}/>
@@ -749,28 +781,23 @@ function InviteCenter({portal,notify}:{portal:Portal;notify:(s:string)=>void}) {
   const load=async()=>{
     setLoading(true);
     try{
-      const response=await fetch("/api/invitations");
-      const data=await response.json() as {invitations?:InviteItem[];bindings?:BindingItem[];error?:string};
-      if(!response.ok) throw new Error(data.error||"邀请数据加载失败");
+            const data=await apiRequest<{invitations?:InviteItem[];bindings?:BindingItem[]}>("/api/invitations");
       setItems(data.invitations??[]);setBindings(data.bindings??[]);
     }catch(error){notify(error instanceof Error?error.message:"邀请数据加载失败");}
     finally{setLoading(false);}
   };
   useEffect(()=>{const timer=window.setTimeout(()=>{void load();},0);return()=>window.clearTimeout(timer);},[portal]);
   const create=async(target:string)=>{
-    const response=await fetch("/api/invitations",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({targetRole:targetRole(target)})});
-    const data=await response.json() as {error?:string};
-    if(!response.ok){notify(data.error||"邀请码生成失败");return;}
-    await load();notify(`${target}邀请二维码已生成`);
+    try{await apiRequest("/api/invitations",{method:"POST",body:{targetRole:targetRole(target)}});await load();notify(`${target}邀请二维码已生成`);}
+    catch(error){notify(error instanceof Error?error.message:"邀请码生成失败");}
   };
   const copyLink=async(item:InviteItem)=>{try{await navigator.clipboard.writeText(item.url);notify("邀请链接已复制");}catch{notify(`邀请链接：${item.url}`);}};
   const download=async(item:InviteItem)=>{
     try{
-      const response=await fetch(item.qr_url);if(!response.ok)throw new Error("二维码读取失败");
-      const blob=await response.blob();const url=URL.createObjectURL(blob);const anchor=document.createElement("a");anchor.href=url;anchor.download=`邀请码_${item.target_role_label}.svg`;anchor.click();URL.revokeObjectURL(url);notify(`${item.target_role_label}二维码已下载`);
+      const blob=await apiBlob(item.qr_url);const url=URL.createObjectURL(blob);const anchor=document.createElement("a");anchor.href=url;anchor.download=`邀请码_${item.target_role_label}.svg`;anchor.click();URL.revokeObjectURL(url);notify(`${item.target_role_label}二维码已下载`);
     }catch(error){notify(error instanceof Error?error.message:"二维码下载失败");}
   };
-  const revoke=async(item:InviteItem)=>{await fetch(`/api/invitations/${item.id}`,{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({status:"revoked"})});await load();notify("邀请码已撤销");};
+  const revoke=async(item:InviteItem)=>{try{await apiRequest(`/api/invitations/${item.id}`,{method:"PATCH",body:{status:"revoked"}});await load();notify("邀请码已撤销");}catch(error){notify(error instanceof Error?error.message:"邀请码撤销失败");}};
   return <div className="viewStack">
     <section className="oaPanel"><PanelHead tag="MY QR CODES" title="我的邀请二维码" action={`${targets.length} 种注册码`}/>
       {loading?<div className="emptyState">正在读取真实邀请码...</div>:<div className="inviteGrid">{targets.map(target=>{
