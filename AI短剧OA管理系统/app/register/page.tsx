@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { BrandSignature } from "@/app/components/BrandSignature";
+import { withBasePath } from "@/app/lib/base-path";
 
 type InvitationInfo = {
   code: string;
@@ -35,7 +36,7 @@ export default function RegisterPage() {
         setLoading(false);
         return;
       }
-      fetch(`/api/public/invitations/${encodeURIComponent(code)}`)
+      fetch(withBasePath(`/api/public/invitations/${encodeURIComponent(code)}`))
         .then(async (response) => {
           const data = await response.json() as { invitation?: InvitationInfo; error?: string };
           if (!response.ok || !data.invitation) throw new Error(data.error || "邀请信息读取失败");
@@ -54,7 +55,7 @@ export default function RegisterPage() {
     setError("");
     setSubmitting(true);
     try {
-      const response = await fetch("/api/public/register", {
+      const response = await fetch(withBasePath("/api/public/register"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ inviteCode, name, phone, email, username, password, region }),

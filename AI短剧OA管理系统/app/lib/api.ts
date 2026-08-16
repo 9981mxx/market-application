@@ -1,3 +1,5 @@
+import { withBasePath } from "@/app/lib/base-path";
+
 export class ApiClientError extends Error {
   status: number;
 
@@ -36,14 +38,14 @@ export async function apiRequest<T>(path: string, options: ApiRequestOptions = {
     headers.set("Content-Type", "application/json");
     body = JSON.stringify(body);
   }
-  const response = await fetch(path, { ...options, body, headers, credentials: "same-origin" });
+  const response = await fetch(withBasePath(path), { ...options, body, headers, credentials: "same-origin" });
   if (!response.ok) throw new ApiClientError(await responseMessage(response), response.status);
   if (response.status === 204) return undefined as T;
   return response.json() as Promise<T>;
 }
 
 export async function apiBlob(path: string, options: RequestInit = {}): Promise<Blob> {
-  const response = await fetch(path, { ...options, credentials: "same-origin" });
+  const response = await fetch(withBasePath(path), { ...options, credentials: "same-origin" });
   if (!response.ok) throw new ApiClientError(await responseMessage(response), response.status);
   return response.blob();
 }
@@ -76,9 +78,5 @@ export const backendApi = {
   config: {
     list: () => apiRequest<{ configs: Record<string, unknown>[] }>("/api/config"),
     save: (configs: Record<string, unknown>[]) => apiRequest<{ success: true }>("/api/config", { method: "PATCH", body: { configs } }),
-  },
-  backups: {
-    list: () => apiRequest<{ backups: Record<string, unknown>[] }>("/api/backups"),
-    create: () => apiRequest<{ backup: Record<string, unknown> }>("/api/backups", { method: "POST" }),
   },
 };

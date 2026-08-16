@@ -17,10 +17,10 @@ test("locks menus and write actions to the intended role matrix", async () => {
   assert.doesNotMatch(page, /"加盟端":\[[^\]]*"审批中心"/);
   assert.doesNotMatch(page, /"代理端":\[[^\]]*"佣金比例调整"/);
   assert.doesNotMatch(page, /"代理端":\[[^\]]*"审批中心"/);
-  assert.match(seed, /market: \[[^\]]*"approval\.write"[^\]]*"config\.read"[^\]]*"backup\.read"/);
+  assert.match(seed, /market: \[[^\]]*"approval\.write"[^\]]*"config\.read"/);
   assert.doesNotMatch(seed, /market: \[[^\]]*"config\.write"/);
-  assert.doesNotMatch(seed, /market: \[[^\]]*"backup\.write"/);
-  assert.match(seed, /super_admin: \[[^\]]*"config\.write"[^\]]*"backup\.write"/);
+  assert.doesNotMatch(seed, /"backup\.(?:read|write)"/);
+  assert.match(seed, /super_admin: \[[^\]]*"config\.write"/);
   assert.match(policy, /WITH RECURSIVE channel_scope/);
   assert.match(approval, /accessibleChannelIds\(account\)/);
   assert.match(approval, /无权审批该渠道的提现申请/);

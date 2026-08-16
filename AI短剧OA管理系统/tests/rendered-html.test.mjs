@@ -33,8 +33,6 @@ const apiRoutes = [
   "app/api/reports/channels/route.ts",
   "app/api/reports/recharges/route.ts",
   "app/api/config/route.ts",
-  "app/api/backups/route.ts",
-  "app/api/backups/[id]/route.ts",
 ];
 
 function projectFile(path) {
@@ -92,8 +90,24 @@ test("defines the persistent data and authentication safeguards", async () => {
   assert.match(auth, /SESSION_MAX_AGE_SECONDS = 60 \* 60 \* 24 \* 7/);
   assert.match(policy, /WITH RECURSIVE channel_scope/);
   assert.equal(JSON.parse(hosting).d1, "DB");
+  assert.equal(JSON.parse(hosting).r2, "FILES");
 });
 
+test("retires the data backup feature without deleting historical storage", async () => {
+  const [page, api, operations, seed] = await Promise.all([
+    readFile(projectFile("app/page.tsx"), "utf8"),
+    readFile(projectFile("app/lib/api.ts"), "utf8"),
+    readFile(projectFile("app/components/backend/BackendOperations.tsx"), "utf8"),
+    readFile(projectFile("server/database.ts"), "utf8"),
+  ]);
+
+  assert.doesNotMatch(page, /数据备份/);
+  assert.doesNotMatch(api, /\/api\/backups/);
+  assert.doesNotMatch(operations, /数据备份|backendApi\.backups/);
+  assert.doesNotMatch(seed, /"backup\.(?:read|write)"/);
+  await assert.rejects(access(projectFile("app/api/backups/route.ts")));
+  await assert.rejects(access(projectFile("app/api/backups/[id]/route.ts")));
+});
 test("connects the management and invitation pages to real APIs", async () => {
   const [page, register, packageJson] = await Promise.all([
     readFile(projectFile("app/page.tsx"), "utf8"),
@@ -109,6 +123,8 @@ test("connects the management and invitation pages to real APIs", async () => {
   assert.match(page, /登录手机号/);
   assert.match(register, /\/api\/public\/register/);
   assert.match(register, /邀请登记/);
+  assert.match(register, /withBasePath/);
+  assert.match(page, /apiRequest/);
 
   const packageData = JSON.parse(packageJson);
   assert.match(packageData.scripts.dev, /^cross-env /);

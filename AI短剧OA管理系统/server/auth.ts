@@ -1,3 +1,4 @@
+import { APP_BASE_PATH } from "@/app/lib/base-path";
 import { ensureDatabase, getD1, writeAudit } from "./database";
 import { ApiError } from "./http";
 import { randomToken, sha256, verifyPassword } from "./security";
@@ -41,12 +42,12 @@ function toAccount(row: AccountRow): AuthAccount {
 
 export function sessionCookie(token: string, request: Request): string {
   const secure = new URL(request.url).protocol === "https:" ? "; Secure" : "";
-  return `${SESSION_COOKIE}=${encodeURIComponent(token)}; HttpOnly; SameSite=Lax; Path=/; Max-Age=${SESSION_MAX_AGE_SECONDS}${secure}`;
+  return `${SESSION_COOKIE}=${encodeURIComponent(token)}; HttpOnly; SameSite=Lax; Path=${APP_BASE_PATH || "/"}; Max-Age=${SESSION_MAX_AGE_SECONDS}${secure}`;
 }
 
 export function clearedSessionCookie(request: Request): string {
   const secure = new URL(request.url).protocol === "https:" ? "; Secure" : "";
-  return `${SESSION_COOKIE}=; HttpOnly; SameSite=Lax; Path=/; Max-Age=0${secure}`;
+  return `${SESSION_COOKIE}=; HttpOnly; SameSite=Lax; Path=${APP_BASE_PATH || "/"}; Max-Age=0${secure}`;
 }
 
 export async function loginAccount(

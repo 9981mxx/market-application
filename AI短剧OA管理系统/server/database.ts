@@ -201,8 +201,8 @@ async function seedRolesAndPermissions(db: D1Database): Promise<void> {
     ["agent", "代理端", 40],
   ] as const;
   const permissions: Record<string, string[]> = {
-    super_admin: ["account.read", "account.write", "channel.read", "channel.write", "user.read", "user.write", "invitation.read", "invitation.write", "withdrawal.read", "withdrawal.write", "approval.read", "approval.write", "notification.read", "notification.write", "audit.read", "file.read", "file.write", "report.read", "config.read", "config.write", "backup.read", "backup.write"],
-    market: ["account.read", "channel.read", "channel.write", "user.read", "user.write", "invitation.read", "invitation.write", "withdrawal.read", "approval.read", "approval.write", "notification.read", "notification.write", "audit.read", "file.read", "file.write", "report.read", "config.read", "backup.read"],
+    super_admin: ["account.read", "account.write", "channel.read", "channel.write", "user.read", "user.write", "invitation.read", "invitation.write", "withdrawal.read", "withdrawal.write", "approval.read", "approval.write", "notification.read", "notification.write", "audit.read", "file.read", "file.write", "report.read", "config.read", "config.write"],
+    market: ["account.read", "channel.read", "channel.write", "user.read", "user.write", "invitation.read", "invitation.write", "withdrawal.read", "approval.read", "approval.write", "notification.read", "notification.write", "audit.read", "file.read", "file.write", "report.read", "config.read"],
     franchise: ["channel.read", "user.read", "invitation.read", "invitation.write", "withdrawal.read", "withdrawal.write", "notification.read", "notification.write", "file.read", "file.write", "report.read"],
     agent: ["user.read", "invitation.read", "invitation.write", "withdrawal.read", "withdrawal.write", "notification.read", "notification.write", "file.read", "file.write", "report.read"],
   };

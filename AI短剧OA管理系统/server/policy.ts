@@ -22,9 +22,7 @@ export type Permission =
   | "file.write"
   | "report.read"
   | "config.read"
-  | "config.write"
-  | "backup.read"
-  | "backup.write";
+  | "config.write";
 
 const INVITE_TARGETS: Record<Role, InviteTargetRole[]> = {
   super_admin: ["market", "franchise", "agent", "user"],

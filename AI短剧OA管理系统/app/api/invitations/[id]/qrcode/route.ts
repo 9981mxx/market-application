@@ -1,4 +1,5 @@
 import QRCode from "qrcode";
+import { withBasePath } from "@/app/lib/base-path";
 import { requireAccount } from "@/server/auth";
 import { getD1 } from "@/server/database";
 import { ApiError, errorResponse } from "@/server/http";
@@ -12,7 +13,7 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
     const invitation = await getD1().prepare("SELECT code FROM invitations WHERE id = ? AND inviter_account_id = ? LIMIT 1")
       .bind(id, account.id).first<{ code: string }>();
     if (!invitation) throw new ApiError(404, "邀请码不存在");
-    const url = new URL(`/register?invite=${encodeURIComponent(invitation.code)}`, request.url).toString();
+    const url = new URL(withBasePath(`/register?invite=${encodeURIComponent(invitation.code)}`), request.url).toString();
     const svg = await QRCode.toString(url, {
       type: "svg",
       width: 360,

@@ -6,7 +6,7 @@ import { BackendOperations, type OperationsView } from "@/app/components/backend
 import { BrandSignature } from "@/app/components/BrandSignature";
 
 type Portal="超级管理员"|"市场端"|"加盟端"|"代理端";
-type View="经营总览"|"渠道生态"|"用户中心"|"产品定价"|"订单承制"|"钱包结算"|"佣金比例调整"|"审批中心"|"邀请管理"|"权限审计"|"消息通知"|"报表统计"|"文件管理"|"系统配置"|"数据备份";
+type View="经营总览"|"渠道生态"|"用户中心"|"产品定价"|"订单承制"|"钱包结算"|"佣金比例调整"|"审批中心"|"邀请管理"|"权限审计"|"消息通知"|"报表统计"|"文件管理"|"系统配置";
 type Approval={id:string;title:string;applicant:string;time:string;status:"待审批"|"已通过"|"已驳回"};
 type Payout=string[];
 type CommRate={id:string;name:string;role:"加盟端"|"代理端";mem:string;course:string;boutique:string};
@@ -22,12 +22,12 @@ const statusFromChannel=(status:string)=>status==="active"?"正常":status==="su
 const statusToChannel=(status:string)=>status==="正常"?"active":status==="暂停"?"suspended":"observing";
 
 const portalNav:Record<Portal,View[]>={
-  "超级管理员":["经营总览","渠道生态","用户中心","产品定价","订单承制","钱包结算","佣金比例调整","审批中心","邀请管理","报表统计","文件管理","权限审计","系统配置","数据备份","消息通知"],
-  "市场端":["经营总览","渠道生态","用户中心","产品定价","订单承制","钱包结算","佣金比例调整","审批中心","邀请管理","报表统计","文件管理","权限审计","系统配置","数据备份","消息通知"],
+  "超级管理员":["经营总览","渠道生态","用户中心","产品定价","订单承制","钱包结算","佣金比例调整","审批中心","邀请管理","报表统计","文件管理","权限审计","系统配置","消息通知"],
+  "市场端":["经营总览","渠道生态","用户中心","产品定价","订单承制","钱包结算","佣金比例调整","审批中心","邀请管理","报表统计","文件管理","权限审计","系统配置","消息通知"],
   "加盟端":["经营总览","渠道生态","用户中心","产品定价","钱包结算","佣金比例调整","邀请管理","报表统计","文件管理","消息通知"],
   "代理端":["经营总览","用户中心","产品定价","钱包结算","邀请管理","报表统计","文件管理","消息通知"],
 };
-const navIcons:Record<View,string>={"经营总览":"◫","渠道生态":"⌘","用户中心":"◎","产品定价":"◇","订单承制":"▦","钱包结算":"¥","佣金比例调整":"％","审批中心":"✓","邀请管理":"⌗","权限审计":"⌁","消息通知":"◉","报表统计":"▥","文件管理":"▤","系统配置":"⚙","数据备份":"↧"};
+const navIcons:Record<View,string>={"经营总览":"◫","渠道生态":"⌘","用户中心":"◎","产品定价":"◇","订单承制":"▦","钱包结算":"¥","佣金比例调整":"％","审批中心":"✓","邀请管理":"⌗","权限审计":"⌁","消息通知":"◉","报表统计":"▥","文件管理":"▤","系统配置":"⚙"};
 const portalTitle:Record<Portal,string>={"超级管理员":"集团经营总览","市场端":"市场运营驾驶舱","加盟端":"华东区域经营中心","代理端":"我的代理工作台"};
 const portalAccount:Record<Portal,string>={"超级管理员":"官方总部","市场端":"市场端·李珊","加盟端":"华东加盟中心","代理端":"星河创作社"};
 const inviteTargets:Record<Portal,string[]>={"超级管理员":["市场端","加盟端","代理端","用户"],"市场端":["加盟端","代理端","用户"],"加盟端":["代理端","用户"],"代理端":["用户"]};
@@ -320,7 +320,7 @@ export default function Home() {
         {view==="佣金比例调整"&&<CommissionRates portal={portal} commRates={commRates} rateLog={rateLog} updateRate={updateRate}/>}
         {view==="审批中心"    &&<ApprovalCenter approvals={approvals} decide={decide} canApprove={canApprove} portal={portal}/>}
         {view==="邀请管理"    &&<InviteCenter portal={portal} notify={notify}/>}
-        {(view==="权限审计"||view==="报表统计"||view==="文件管理"||view==="系统配置"||view==="数据备份")&&<BackendOperations view={view as OperationsView} role={account!.role} notify={notify}/>}
+        {(view==="权限审计"||view==="报表统计"||view==="文件管理"||view==="系统配置")&&<BackendOperations view={view as OperationsView} role={account!.role} notify={notify}/>}
         {view==="消息通知"    &&<MsgCenter msgs={myMsgs} markRead={markRead} markAllRead={markAllRead} setView={setView}/>}
       </section>
       {toast&&<div className="oaToast">{toast}</div>}

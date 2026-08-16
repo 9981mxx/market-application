@@ -14,7 +14,7 @@ test("uses one frontend API client for authenticated backend modules", async () 
 
   assert.match(client, /credentials: "same-origin"/);
   assert.match(client, /apiBlob/);
-  for (const endpoint of ["approvals", "notifications", "audit-logs", "reports/overview", "files", "config", "backups"]) {
+  for (const endpoint of ["approvals", "notifications", "audit-logs", "reports/overview", "files", "config"]) {
     assert.match(client, new RegExp(`/api/${endpoint.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}`));
   }
   assert.match(page, /backendApi\.approvals\.list/);
@@ -23,7 +23,8 @@ test("uses one frontend API client for authenticated backend modules", async () 
   assert.match(operations, /backendApi\.reports\.overview/);
   assert.match(operations, /backendApi\.files\.upload/);
   assert.match(operations, /backendApi\.config\.save/);
-  assert.match(operations, /backendApi\.backups\.create/);
+  assert.doesNotMatch(operations, /backendApi\\.backups/);
+  assert.doesNotMatch(operations, /数据备份/);
 });
 
 test("keeps logout visible and renders the brand without an optimized image route", async () => {

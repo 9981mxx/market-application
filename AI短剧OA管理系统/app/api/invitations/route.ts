@@ -1,3 +1,4 @@
+import { withBasePath } from "@/app/lib/base-path";
 import { requireAccount } from "@/server/auth";
 import { getD1, writeAudit } from "@/server/database";
 import { ApiError, cleanText, errorResponse, readJson } from "@/server/http";
@@ -9,7 +10,7 @@ function invitationCode(): string {
 }
 
 function inviteUrl(request: Request, code: string): string {
-  return new URL(`/register?invite=${encodeURIComponent(code)}`, request.url).toString();
+  return new URL(withBasePath(`/register?invite=${encodeURIComponent(code)}`), request.url).toString();
 }
 
 export async function GET(request: Request) {
@@ -32,7 +33,7 @@ export async function GET(request: Request) {
       ...item,
       target_role_label: INVITE_ROLE_LABELS[item.target_role],
       url: inviteUrl(request, item.code),
-      qr_url: new URL(`/api/invitations/${item.id}/qrcode`, request.url).toString(),
+      qr_url: new URL(withBasePath(`/api/invitations/${item.id}/qrcode`), request.url).toString(),
     }));
     const bindings = await getD1().prepare(`
       SELECT b.id, b.invitee_type, b.invitee_id, b.created_at, i.target_role,
