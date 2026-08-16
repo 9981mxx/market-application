@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { BrandSignature } from "@/app/components/BrandSignature";
 
 type InvitationInfo = {
   code: string;
@@ -73,8 +74,7 @@ export default function RegisterPage() {
   return <main className="registerPage">
     <section className="registerShell">
       <header className="registerBrand">
-        <img src="/leopard-speed-logo.png" alt="Leopard Speed" />
-        <div><strong>Leopard Speed</strong><span>AI 短剧教育 OA</span></div>
+        <BrandSignature subtitle="AI 短剧教育 OA" />
       </header>
       {loading ? <div className="registerState">正在验证邀请信息...</div> : success ? <div className="registerSuccess">
         <span>登记完成</span>

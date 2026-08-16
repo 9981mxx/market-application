@@ -1,8 +1,9 @@
 "use client";
 import { useEffect, useState } from "react";
-import Image from "next/image";
+
 import { apiBlob, apiRequest, backendApi } from "@/app/lib/api";
 import { BackendOperations, type OperationsView } from "@/app/components/backend/BackendOperations";
+import { BrandSignature } from "@/app/components/BrandSignature";
 
 type Portal="超级管理员"|"市场端"|"加盟端"|"代理端";
 type View="经营总览"|"渠道生态"|"用户中心"|"产品定价"|"订单承制"|"钱包结算"|"佣金比例调整"|"审批中心"|"邀请管理"|"权限审计"|"消息通知"|"报表统计"|"文件管理"|"系统配置"|"数据备份";
@@ -106,17 +107,7 @@ function LoginPage({onLogin}:{onLogin:(account:BackendAccount)=>void}) {
       <div className="loginBg"><i/><i/><i/></div>
       <div className="loginCard">
         <div className="loginLogo">
-          <div className="brandMark">
-            <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <rect width="32" height="32" rx="9" fill="url(#lg1)"/>
-              <path d="M8 22 L14 10 L18 17 L21 13 L25 22 Z" fill="rgba(255,255,255,0.15)" stroke="none"/>
-              <path d="M8 22 L14 10 L18 17" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
-              <path d="M18 17 L21 13 L25 22" stroke="rgba(255,255,255,0.7)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
-              <circle cx="14" cy="10" r="2" fill="white"/><circle cx="21" cy="13" r="1.4" fill="rgba(255,255,255,0.8)"/>
-              <defs><linearGradient id="lg1" x1="0" y1="0" x2="32" y2="32" gradientUnits="userSpaceOnUse"><stop offset="0%" stopColor="#1a3a8f"/><stop offset="100%" stopColor="#3a62d4"/></linearGradient></defs>
-            </svg>
-            <div className="brandText"><strong>Leopard Speed</strong><span>BUSINESS OS</span></div>
-          </div>
+          <BrandSignature />
         </div>
         <div className="loginHead"><h1>登记</h1><p>数影豹驱 · AI 短剧教育 OA 管理系统</p></div>
         <form onSubmit={submit} className="loginForm">
@@ -149,6 +140,7 @@ export default function Home() {
   const [users,setUsers]=useState<UserRecord[]>(initUsers);
   const [partners,setPartners]=useState<ChannelPartner[]>(initPartners);
   const [msgs,setMsgs]=useState<Msg[]>([]);
+  const [loggingOut,setLoggingOut]=useState(false);
 
   const notify=(msg:string)=>{setToast(msg);window.setTimeout(()=>setToast(""),2600);};
   const notificationText=(row:Record<string,unknown>)=>{
@@ -188,7 +180,17 @@ export default function Home() {
     }catch(error){notify(error instanceof Error?error.message:"数据加载失败");}
   };
   const login=async(nextAccount:BackendAccount)=>{setAccount(nextAccount);setPortal(portalFromRole(nextAccount.role));setView("经营总览");await loadBackendData(nextAccount);};
-  const logout=async()=>{try{await apiRequest<{success:true}>("/api/auth/logout",{method:"POST"});}finally{setAccount(null);setPortal(null);setApprovals([]);setMsgs([]);setView("经营总览");}};
+  const logout=async()=>{
+    if(loggingOut)return;
+    setLoggingOut(true);
+    try{
+      await apiRequest<{success:true}>("/api/auth/logout",{method:"POST"});
+    }catch{
+      // Keep local sign-out available even when the session endpoint is temporarily unreachable.
+    }finally{
+      setAccount(null);setPortal(null);setApprovals([]);setMsgs([]);setPartners([]);setUsers([]);setView("经营总览");setLoggingOut(false);
+    }
+  };
   useEffect(()=>{let active=true;apiRequest<{account?:BackendAccount|null}>("/api/auth/me").then(async data=>{if(active&&data.account){setAccount(data.account);setPortal(portalFromRole(data.account.role));await loadBackendData(data.account);}}).catch(()=>{});return()=>{active=false;};},[]);
   const markRead=async(id:string)=>{try{await backendApi.notifications.read(id);setMsgs(list=>list.map(item=>item.id===id?{...item,read:true}:item));}catch(error){notify(error instanceof Error?error.message:"消息更新失败");}};
   const markAllRead=async()=>{try{await backendApi.notifications.readAll();setMsgs(list=>list.map(item=>({...item,read:true})));}catch(error){notify(error instanceof Error?error.message:"消息更新失败");}};
@@ -275,8 +277,7 @@ export default function Home() {
     <main className={`oaShell portal-${portal==="超级管理员"?"S":portal==="市场端"?"A":portal==="加盟端"?"B":"C"}`}>
       <aside className="oaSidebar">
         <button className="oaBrand" onClick={()=>setView("经营总览")}>
-          <Image src="/leopard-speed-logo.png" width={148} height={34} alt="Leopard Speed"/>
-          <span>BUSINESS OS</span>
+          <BrandSignature compact />
         </button>
         <div className="workspace"><small>当前端口</small><button><b>{portal}</b><span>{account?.displayName||portalAccount[portal]}</span><i>⌄</i></button></div>
         <nav>
@@ -289,12 +290,15 @@ export default function Home() {
           ))}
         </nav>
         <div className="sidebarFoot">
-          <button onClick={()=>notify("已打开系统设置")}>⚙ 系统设置</button>
-          <div>
-            <span>{portal==="超级管理员"?"S":portal==="市场端"?"A":portal==="加盟端"?"B":"C"}</span>
+          <button className="sidebarSettings" onClick={()=>notify("已打开系统设置")}><span aria-hidden="true">⚙</span>系统设置</button>
+          <div className="sidebarAccount">
+            <span className="accountAvatar">{portal==="超级管理员"?"S":portal==="市场端"?"A":portal==="加盟端"?"B":"C"}</span>
             <p><b>{account?.displayName||portalAccount[portal]}</b><small>{portal}</small></p>
-            <button onClick={logout}>退出</button>
           </div>
+          <button className="logoutButton" onClick={logout} disabled={loggingOut} aria-label="退出登录">
+            <span className="logoutIcon" aria-hidden="true">↪</span>
+            <span>{loggingOut?"正在退出...":"退出登录"}</span>
+          </button>
         </div>
       </aside>
       <section className="oaMain">

@@ -89,3 +89,36 @@
 .registerForm{display:grid;grid-template-columns:1fr 1fr;gap:16px}.registerForm label{display:grid;gap:7px;font-size:12px;font-weight:700;color:#4c566b}.registerForm input{height:43px;border:1px solid #d8deea;padding:0 12px;font:inherit;color:#17213a;background:#fff}.registerForm input:focus{outline:2px solid rgba(55,99,204,.16);border-color:#3763cc}.registerForm button{grid-column:1/-1;height:46px;border:0;background:#193b8f;color:#fff;font-weight:800;cursor:pointer}.registerForm button:disabled{opacity:.5;cursor:not-allowed}.registerError{grid-column:1/-1;padding:10px 12px;background:#fff1f1;color:#b22b2b;font-size:13px}.registerState,.registerSuccess{padding:54px 0;text-align:center}.registerSuccess span{font-size:11px;font-weight:800;color:#2a7c55}.registerSuccess h1{font-size:28px;margin:10px}.registerSuccess p{color:#687286}.registerSuccess a{display:inline-flex;margin-top:15px;padding:12px 22px;background:#193b8f;color:#fff;text-decoration:none;font-weight:800}
 @media(max-width:980px){.opsStats{grid-template-columns:repeat(3,minmax(0,1fr))}.opsForm>div:last-child{grid-template-columns:1fr 1fr}.withdrawForm{grid-template-columns:repeat(2,minmax(130px,1fr))}.withdrawForm label:last-of-type{grid-column:auto}}
 @media(max-width:640px){.registerShell{padding:24px 18px}.registerForm{grid-template-columns:1fr}.registerForm button,.registerError{grid-column:auto}.opsBand{align-items:flex-start;flex-direction:column;padding:18px}.opsStats{grid-template-columns:repeat(2,minmax(0,1fr))}.opsForm>div:last-child,.withdrawForm{grid-template-columns:1fr}.opsFileList article{align-items:flex-start;flex-direction:column}.withdrawForm label:last-of-type{grid-column:auto}}
+
+/* Unified brand signature and persistent account actions */
+.brandSignature{display:inline-flex;align-items:center;gap:11px;max-width:100%;color:#122142}
+.brandEmblem{position:relative;display:inline-block;width:36px;height:36px;flex:0 0 36px;overflow:hidden;border:1px solid rgba(255,255,255,.6);border-radius:9px;background:linear-gradient(145deg,#142f78 0%,#315cd0 62%,#64bfe3 100%);box-shadow:0 8px 20px rgba(43,82,180,.24),inset 0 1px rgba(255,255,255,.28)}
+.brandEmblem:before{content:"";position:absolute;width:22px;height:3px;left:5px;top:12px;border-radius:4px;background:#fff;transform:rotate(-33deg);box-shadow:3px 7px 0 rgba(255,255,255,.76)}
+.brandEmblem:after{content:"";position:absolute;width:7px;height:7px;right:5px;bottom:5px;border:2px solid rgba(255,255,255,.9);border-left-color:transparent;border-radius:50%}
+.brandEmblem i:first-child{position:absolute;left:-5px;bottom:7px;width:21px;height:2px;border-radius:4px;background:rgba(255,255,255,.45);transform:rotate(-33deg)}
+.brandEmblem i:last-child{position:absolute;right:8px;top:7px;width:4px;height:4px;border-radius:50%;background:#fff;box-shadow:0 0 0 4px rgba(255,255,255,.14)}
+.brandSignatureText{display:grid;min-width:0;gap:2px;text-align:left}
+.brandSignatureText strong{overflow:hidden;color:#172341;font-size:14px;font-weight:800;line-height:1.15;letter-spacing:0;white-space:nowrap;text-overflow:ellipsis}
+.brandSignatureText small{color:#6e7d98;font-size:7px;font-weight:650;line-height:1.2;letter-spacing:2.6px;white-space:nowrap}
+.brandSignatureCompact .brandEmblem{width:34px;height:34px;flex-basis:34px}
+.brandSignatureCompact .brandSignatureText strong{font-size:13px}
+.oaBrand{display:block;width:100%;padding:0 7px 20px}
+.oaBrand>.brandSignature{display:inline-flex;width:100%;margin:0;color:#122142;font-size:inherit;letter-spacing:0}
+.oaSidebar nav{flex:1;min-height:0;overflow-y:auto;padding-right:3px;scrollbar-width:thin;scrollbar-color:rgba(92,113,151,.28) transparent}
+.sidebarFoot{display:grid;gap:8px;flex-shrink:0;margin-top:10px;padding-top:10px;border-top:1px solid var(--line)}
+.sidebarFoot>.sidebarSettings{display:flex;align-items:center;gap:8px;width:100%;height:32px;padding:0 10px;border:0;border-radius:8px;background:transparent;color:#6f7c90;font-size:9px;text-align:left;cursor:pointer}
+.sidebarFoot>.sidebarSettings:hover{background:rgba(255,255,255,.68);color:#263d70}
+.sidebarFoot>.sidebarAccount{display:flex;align-items:center;gap:9px;min-width:0;padding:2px 5px;border-top:0}
+.sidebarAccount>.accountAvatar{display:grid;width:34px;height:34px;flex:0 0 34px;place-items:center;border-radius:9px;background:linear-gradient(145deg,#8fb2ff,#4e75db);color:#fff;font-size:11px;font-weight:800;box-shadow:0 6px 15px rgba(58,91,179,.18)}
+.sidebarAccount p{display:grid;min-width:0;flex:1;margin:0}
+.sidebarAccount b{overflow:hidden;font-size:9px;white-space:nowrap;text-overflow:ellipsis}
+.sidebarAccount small{color:#8993a3;font-size:7px}
+.logoutButton{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;height:38px;border:1px solid rgba(181,63,78,.16);border-radius:9px;background:rgba(255,255,255,.74);color:#9c3343;font-size:9px;font-weight:750;cursor:pointer;box-shadow:0 5px 14px rgba(71,82,108,.06)}
+.logoutButton:hover{border-color:rgba(181,63,78,.28);background:#fff4f5;box-shadow:0 7px 16px rgba(159,52,67,.1)}
+.logoutButton:disabled{cursor:wait;opacity:.62}
+.logoutIcon{font-size:14px;line-height:1;transform:rotate(180deg)}
+.loginLogo .brandSignature{margin-bottom:28px}
+.registerBrand .brandSignature{width:100%}
+.registerBrand .brandEmblem{width:42px;height:42px;flex-basis:42px;border-radius:10px}
+.registerBrand .brandSignatureText strong{font-size:16px}
+.registerBrand .brandSignatureText small{font-size:8px}

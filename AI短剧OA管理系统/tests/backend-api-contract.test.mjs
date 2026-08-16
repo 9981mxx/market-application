@@ -25,3 +25,23 @@ test("uses one frontend API client for authenticated backend modules", async () 
   assert.match(operations, /backendApi\.config\.save/);
   assert.match(operations, /backendApi\.backups\.create/);
 });
+
+test("keeps logout visible and renders the brand without an optimized image route", async () => {
+  const [page, register, brand, styles] = await Promise.all([
+    source("app/page.tsx"),
+    source("app/register/page.tsx"),
+    source("app/components/BrandSignature.tsx"),
+    source("app/globals.css"),
+  ]);
+
+  assert.match(page, /\/api\/auth\/logout/);
+  assert.match(page, /className="logoutButton"/);
+  assert.match(page, /退出登录/);
+  assert.match(page, /<BrandSignature compact \/>/);
+  assert.match(register, /<BrandSignature subtitle="AI 短剧教育 OA" \/>/);
+  assert.doesNotMatch(page, /leopard-speed-logo\.png/);
+  assert.doesNotMatch(register, /leopard-speed-logo\.png/);
+  assert.match(brand, /className="brandEmblem"/);
+  assert.match(styles, /\.oaSidebar nav\{flex:1;min-height:0;overflow-y:auto/);
+  assert.match(styles, /\.logoutButton\{/);
+});

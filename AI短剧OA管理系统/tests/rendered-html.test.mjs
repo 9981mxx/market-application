@@ -125,10 +125,12 @@ test("archives the business and technical updates separately", async () => {
   assert.match(business, /2026-08-14 后端模块 1—5 业务落地/);
   assert.match(business, /v4 后端基础版/);
   assert.match(business, /永久邀请归属/);
+  assert.match(business, /登录退出与品牌体验迭代/);
   assert.doesNotMatch(business, /PBKDF2|PreparedStatement|npm run typecheck/);
 
   assert.match(technical, /2026-08-14 后端模块 1—5 技术栈/);
   assert.match(technical, /2026-08-14 v4/);
   assert.match(technical, /PBKDF2-SHA256/);
   assert.match(technical, /D1 PreparedStatement/);
+  assert.match(technical, /品牌图片显示为破图/);
 });
